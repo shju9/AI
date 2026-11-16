@@ -1,75 +1,645 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Creative Agent</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팜펫 도우미</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{
+  --moss:#2E5E3E; --moss-d:#1F4430; --leaf:#7FB069; --mint:#E3F1E6; --mist:#F3F8F2;
+  --pollen:#F2C14E; --bark:#5B4636; --ink:#1E2B22; --soft:#5E7064; --line:#D5E4D8;
+  --danger:#B5452F; --warn:#C98A12; --ok:#2F8A4E; --card:#FFFFFF;
+  --serif:"Gowun Batang",serif; --sans:"Pretendard Variable",Pretendard,-apple-system,"Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--mist);color:var(--ink);font-family:var(--sans);line-height:1.6;word-break:keep-all;overflow-wrap:anywhere;
+  background-image:radial-gradient(circle at 12% 0%,#D6EBD9 0,transparent 42%),radial-gradient(circle at 100% 30%,#FBF0CF 0,transparent 35%)}
+a{color:var(--moss)}
+:focus-visible{outline:3px solid var(--pollen);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+header{padding:22px 0 8px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:700;font-size:20px;color:var(--moss-d)}
+.brand .seed{width:36px;height:36px;border-radius:50% 50% 50% 8px;background:var(--moss);display:grid;place-items:center;font-size:19px;transform:rotate(-8deg)}
+
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:start;padding:18px 0 36px}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.22;letter-spacing:-.02em;margin:8px 0 12px;color:var(--moss-d)}
+.lead{color:var(--soft);font-size:16.5px;max-width:34em;margin:0 0 22px}
+
+/* field-note form */
+.note{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;
+  box-shadow:0 20px 40px -28px rgba(31,68,48,.45);position:relative}
+.note::before{content:"";position:absolute;left:24px;right:24px;top:-7px;height:14px;border-radius:7px;
+  background:repeating-linear-gradient(90deg,var(--leaf) 0 10px,transparent 10px 22px);opacity:.55}
+fieldset{border:0;margin:0 0 18px;padding:0}
+legend,.lbl{font-weight:700;font-size:14.5px;color:var(--moss-d);margin-bottom:8px;padding:0;display:block}
+.hint{font-weight:500;color:var(--soft);font-size:13px;margin-left:6px}
+input[type=text],input[type=number],textarea{width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--mist);
+  border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .15s,background .15s}
+input:focus,textarea:focus{outline:none;border-color:var(--moss);background:#fff}
+textarea{min-height:74px;resize:vertical}
+.drop{position:relative;margin-top:10px;border:1.5px dashed var(--leaf);border-radius:14px;background:var(--mist);transition:background .15s,border-color .15s}
+.drop.over{background:var(--mint);border-color:var(--moss)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop:focus-within{outline:3px solid var(--pollen);outline-offset:2px}
+.drop-empty{display:flex;align-items:center;gap:12px;padding:12px 14px;color:var(--moss-d);font-size:14px;line-height:1.35}
+.drop-empty .ico{font-size:30px;filter:drop-shadow(0 6px 4px rgba(31,68,48,.25))}
+.drop-empty small{color:var(--soft)}
+.drop-full{display:flex;align-items:center;gap:12px;padding:10px 12px;font-size:13.5px;color:var(--moss-d)}
+.drop-full img{width:56px;height:56px;object-fit:cover;border-radius:12px;border:2px solid #fff;box-shadow:0 6px 12px -6px rgba(31,68,48,.5)}
+.drop-full span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop-full .x{position:relative;z-index:1;border:0;background:#fff;color:var(--danger);font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:7px 10px;cursor:pointer}
+.critter img{width:96px;height:96px;object-fit:cover;border-radius:20px;border:3px solid #fff;display:block}
+.r-emoji img{width:72px;height:72px;object-fit:cover;border-radius:18px;border:3px solid #fff;display:block}
+.idnote{margin:6px 0 0;font-size:13.5px;color:var(--soft)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px;align-items:end}
+.opt{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:7px;font-size:11.5px;font-weight:600;vertical-align:1px;
+  background:var(--mist);color:var(--soft);border:1px solid var(--line)}
+.opt.req{background:#FCEFD0;color:#7A5A06;border-color:#F1DDA4}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--mist);border:1.5px solid var(--line);margin-bottom:10px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:6px 14px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--soft);cursor:pointer}
+.seg input:checked+label{background:#fff;color:var(--moss-d);box-shadow:0 2px 6px -2px rgba(31,68,48,.3)}
+.seg input:focus-visible+label{outline:3px solid var(--pollen);outline-offset:1px}
+.size-row{display:flex;align-items:center;gap:8px}
+.size-row input{flex:1;min-width:0}
+.size-row select{font:inherit;font-size:15px;color:var(--ink);background:var(--mist);border:1.5px solid var(--line);border-radius:12px;padding:11px 10px;cursor:pointer}
+.size-row select:focus{outline:none;border-color:var(--moss);background:#fff}
+.size-row .times{color:var(--soft);font-weight:600}
+.unit-short{max-width:200px}
+.unit{position:relative}.unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--soft);font-size:13px;pointer-events:none}
+.unit input{padding-right:38px}
+
+/* 3D option tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{position:relative}
+.tile input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.tile label{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 10px;border-radius:16px;cursor:pointer;
+  background:var(--mist);border:1.5px solid var(--line);font-weight:600;font-size:13.5px;color:var(--soft);text-align:center;
+  transform-style:preserve-3d;transition:transform .2s,border-color .2s,background .2s}
+.tile .ico{font-size:30px;line-height:1;transform:translateZ(18px);filter:drop-shadow(0 6px 4px rgba(31,68,48,.25))}
+.tile small{font-weight:500;font-size:11.5px;color:var(--soft)}
+.tile input:checked+label{background:var(--mint);border-color:var(--moss);color:var(--moss-d)}
+.tile input:focus-visible+label{outline:3px solid var(--pollen);outline-offset:2px}
+
+.go{width:100%;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:16px;color:#fff;background:var(--moss);
+  padding:15px;border-radius:14px;display:flex;justify-content:center;align-items:center;gap:10px;transition:background .15s,transform .1s}
+.go:hover{background:var(--moss-d)}.go:active{transform:scale(.99)}.go[disabled]{opacity:.65;cursor:wait}
+.formnote{color:var(--soft);font-size:12.5px;margin:10px 2px 0}
+
+/* terrarium */
+.stage{position:sticky;top:20px}
+.terra-box{height:420px;border-radius:26px;background:linear-gradient(180deg,#DFF0E3,#F6FBF5);border:1px solid var(--line);
+  display:grid;place-items:center;perspective:900px;overflow:hidden;position:relative;touch-action:none;cursor:grab}
+.terra-box:active{cursor:grabbing}
+.cube{--w:220px;--h:170px;--d:160px;width:var(--w);height:var(--h);position:relative;transform-style:preserve-3d;
+  transform:rotateX(-14deg) rotateY(-28deg);transition:width .5s,height .5s}
+.face{position:absolute;border:1.5px solid rgba(255,255,255,.9);background:rgba(200,236,214,.18);
+  box-shadow:inset 0 0 24px rgba(255,255,255,.55);backdrop-filter:blur(1px)}
+.f-front,.f-back{width:var(--w);height:var(--h)}
+.f-left,.f-right{width:var(--d);height:var(--h);left:calc((var(--w) - var(--d))/2)}
+.f-top,.f-bottom{width:var(--w);height:var(--d);top:calc((var(--h) - var(--d))/2)}
+.f-front{transform:translateZ(calc(var(--d)/2))}
+.f-back{transform:rotateY(180deg) translateZ(calc(var(--d)/2))}
+.f-right{transform:rotateY(90deg) translateZ(calc(var(--w)/2))}
+.f-left{transform:rotateY(-90deg) translateZ(calc(var(--w)/2))}
+.f-top{transform:rotateX(90deg) translateZ(calc(var(--h)/2));background:rgba(255,255,255,.12)}
+.f-bottom{transform:rotateX(-90deg) translateZ(calc(var(--h)/2));background:linear-gradient(135deg,#7A5C45,#5B4636);border-color:#4a3829}
+.soil{position:absolute;left:0;right:0;bottom:0;height:34px;transform-style:preserve-3d}
+.soil i{position:absolute;inset:0;background:linear-gradient(180deg,#8B6A4F,#5B4636)}
+.soil .s-front{transform:translateZ(calc(var(--d)/2 - 1px))}
+.soil .s-back{transform:rotateY(180deg) translateZ(calc(var(--d)/2 - 1px))}
+.critter{position:absolute;left:50%;bottom:30px;transform:translateX(-50%) translateZ(10px);font-size:78px;line-height:1;
+  filter:drop-shadow(0 14px 8px rgba(31,68,48,.35));animation:breathe 3.2s ease-in-out infinite;transform-style:preserve-3d}
+.sprout{position:absolute;bottom:30px;font-size:30px;line-height:1}
+.sprout.a{left:14px;transform:translateZ(-40px)}.sprout.b{right:16px;transform:translateZ(30px)}
+.sky{position:absolute;top:22px;right:26px;font-size:44px;transition:opacity .3s,transform .4s;filter:drop-shadow(0 6px 6px rgba(0,0,0,.12))}
+.gear{position:absolute;top:24px;left:26px;font-size:30px;opacity:0;transition:opacity .3s}
+.gear.on{opacity:1;animation:spin 6s linear infinite}
+.tag{position:absolute;left:18px;bottom:16px;right:18px;display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--moss-d)}
+.tag b{font-family:var(--serif);font-size:20px}
+.stage p{color:var(--soft);font-size:13px;margin:10px 4px 0}
+@keyframes breathe{50%{transform:translateX(-50%) translateZ(10px) translateY(-6px) scale(1.03)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* report */
+#report{padding:6px 0 60px;scroll-margin-top:20px}
+.paper{background:var(--card);border:1px solid var(--line);border-radius:26px;overflow:hidden;box-shadow:0 30px 60px -40px rgba(31,68,48,.5)}
+.r-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:26px 28px;background:var(--mint);border-bottom:1px solid var(--line)}
+.r-emoji{font-size:58px;line-height:1;filter:drop-shadow(0 10px 6px rgba(31,68,48,.3))}
+.r-head h2{font-family:var(--serif);font-size:30px;margin:0;line-height:1.2;color:var(--moss-d)}
+.r-head .sci{color:var(--soft);font-style:italic;font-size:14.5px}
+.stamp{border:3px solid currentColor;border-radius:14px;padding:8px 14px;text-align:center;transform:rotate(-4deg);font-family:var(--serif);font-weight:700;font-size:20px;line-height:1.25;background:#fff}
+.stamp small{display:block;font-family:var(--sans);font-size:12.5px;font-weight:600}
+.stamp.ok{color:var(--ok)}.stamp.mid{color:var(--warn)}.stamp.no{color:var(--danger)}
+.demo-flag{background:#FFF6DA;color:#7A5A06;font-size:13px;padding:10px 28px;border-bottom:1px solid #F1E2B0}
+.r-body{padding:24px 28px 30px;display:grid;gap:28px}
+.r-body>section{min-width:0}
+.r-body h3{font-family:var(--serif);font-size:20px;margin:0 0 12px;color:var(--moss-d)}
+.env{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0}
+.env div{background:var(--mist);border-radius:14px;padding:10px 13px}
+.env dt{font-size:12.5px;color:var(--soft)}.env dd{margin:0;font-weight:600}
+.money{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end}
+.money .big{font-family:var(--serif);font-size:34px;font-weight:700;color:var(--moss-d);line-height:1.1}
+.money .sub{color:var(--soft);font-size:13.5px}
+.bar{grid-column:1/-1;height:14px;border-radius:7px;background:var(--mist);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:7px;transition:width .8s}
+.bar.over i{background:var(--danger)}
+.tbl{width:100%;min-width:640px;border-collapse:collapse;font-size:14.5px}
+.tbl th{text-align:left;font-size:12.5px;color:var(--soft);font-weight:600;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.num,.tbl th.num{text-align:right;white-space:nowrap}
+.tier{display:inline-block;white-space:nowrap;font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px}
+.tier.t1{background:#DCEFE0;color:var(--moss-d)}.tier.t2{background:#FCF1D2;color:#7A5A06}.tier.t3{background:#EEE8E3;color:var(--bark)}
+.need{color:var(--warn);font-weight:600;font-size:13px}
+.spec{color:var(--soft);font-size:13px}
+.tbl tfoot td{font-weight:700;border-bottom:0}
+.verdict{background:var(--mist);border-radius:18px;padding:18px 20px}
+.verdict p{margin:0 0 10px;font-size:16px}
+.verdict ul{margin:0;padding-left:20px}.verdict li{margin:4px 0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scroll{overflow-x:auto}
+.progress{padding:26px 28px 24px}
+.p-top{display:flex;align-items:center;gap:12px;color:var(--moss-d);font-size:16px}
+.p-top .pot{font-size:34px;animation:grow 1.4s ease-in-out infinite}
+.p-bar{margin:16px 0 10px;height:12px;border-radius:6px;background:var(--mist);overflow:hidden;box-shadow:inset 0 1px 2px rgba(31,68,48,.12)}
+.p-bar i{display:block;height:100%;width:0;border-radius:6px;transition:width .5s linear;
+  background:repeating-linear-gradient(-45deg,var(--leaf) 0 12px,#93C07F 12px 24px);background-size:34px 34px;animation:stripes 1s linear infinite}
+.p-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--soft);font-size:13px}
+.p-meta span:first-child{font-variant-numeric:tabular-nums;color:var(--moss-d);font-weight:600}
+@keyframes stripes{to{background-position:34px 0}}
+.loading{display:flex;align-items:center;gap:14px;padding:30px 28px;color:var(--moss-d);font-weight:600}
+.loading .pot{font-size:34px;animation:grow 1.4s ease-in-out infinite}
+@keyframes grow{50%{transform:translateY(-6px) scale(1.12)}}
+.err{padding:22px 28px;color:var(--danger);font-weight:600}
+footer{text-align:center;color:var(--soft);font-size:13px;padding:10px 0 40px}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .stage{position:static;order:-1}
+  .terra-box{height:300px}
+  .cols,.money{grid-template-columns:1fr}
+  .r-head{grid-template-columns:auto 1fr}.stamp{grid-column:1/-1;justify-self:start}
+}
+@media (max-width:520px){.r-head{grid-template-columns:1fr;padding:22px 20px}.r-body{padding:20px}.r-head h2{font-size:26px}.row3{grid-template-columns:1fr 1fr}.row3 .unit:last-child{grid-column:1/-1}.tiles{gap:6px}.note{padding:18px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
-  <p id="status" role="status" aria-live="polite">채팅에 연결하는 중입니다...</p>
-  <div id="webchat" style="height: 600px"></div>
-  <script src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"></script>
-  <script>
-    const BROKER_URL = "https://dl-broker-juwon-4jt3z.azurewebsites.net/api/directlineToken";
-    const SEALED = "DH-6RVAHXhCzMRNZixklbOUUA5VeM-Q8xInJIRHBRqP_fmRFDhvsCj-ha3nvTdawkO4qiCGCXdG6wLpzw11siqifqEg4OvUz20vMcU1jacyKWRm3MPDtn2mwMbtzH7nY1NKCHGDDDxG_-4zqvw0tE0kb8VzseqsLVeiC6WIQq6KwaTuoWfi6aKJk3ZTpY683_MeRp1B4jent-Zj671nKLs0uIu9ceKb7UGB2VNICunk1L1uGtAXUKeZS-MLBcxzoCQPws7DAKSO01uJtTHWqlbFDL9zMZa9neqtnilqnZsJUMq0gxwXq1RMRXRhG8K7l8BW4-W7zgh1o7AiDR98fCeNw9nDxJA0hASbNoZADvbw04tYXDZ16h-WScngWsjPHdXRdUZ_VHA5eW-T6wEP8lFcTMAR7UOMDRzeAwppPzWnY8_87VMqlVlvfSwt2eDWDaSkxHcD-o6FbQLGcsBoiVF1KeDnX0W2kiCNLcyJQ8bvKfNKt-JdvGihJrQgNZrq0OeVa-_999-RkEa8vZHkWGsPxLKNLCBJ22MSVg_OgcEMjb97ioCpDlysFbEfEIV9zOX5w9-0NDERMsEKqyWm5pisa2rvjSI0IOtF7QhmMed4DISvkeI-OY_MW9_QQnssjoyFEXtkGfUxsTsgj";
-    const status = document.getElementById("status");
+<header><div class="wrap brand"><span class="seed" aria-hidden="true">🌿</span>팜펫 도우미</div></header>
 
-    function showError(message) {
-      status.hidden = false;
-      status.textContent = message;
-    }
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h1>키우고 싶은 생물,<br>우리 집에서 잘 살 수 있을까요?</h1>
+      <p class="lead">키울 동식물과 지금 공간을 적어 주세요. 필요한 기자재를 실제 판매가로 찾아 총비용을 계산하고, 키울 수 있는지 한 번에 판단해 드립니다.</p>
 
-    async function connect() {
-      if (!window.WebChat ||
-          typeof WebChat.createDirectLine !== "function" ||
-          typeof WebChat.renderWebChat !== "function") {
-        showError("채팅 구성 요소를 불러오지 못했습니다. 네트워크를 확인한 뒤 새로고침해 주세요.");
-        return;
-      }
+      <form class="note" id="form" novalidate>
+        <fieldset>
+          <label class="lbl" for="name">키울 동식물<span class="opt req">필수</span><span class="hint">이름이나 사진 중 하나는 꼭 넣어 주세요</span></label>
+          <input id="name" name="name" type="text" placeholder="예: 레오파드 게코, 몬스테라, 베타" autocomplete="off">
+          <div class="drop" id="drop">
+            <input id="photo" type="file" accept="image/*" aria-label="동식물 사진 올리기">
+            <div class="drop-empty" id="dropEmpty"><span class="ico" aria-hidden="true">📷</span><span><b>사진으로 찾기</b><br><small>눌러서 고르거나 여기로 끌어다 놓으세요</small></span></div>
+            <div class="drop-full" id="dropFull" hidden><img id="thumb" alt="올린 사진 미리 보기"><span id="photoName"></span><button type="button" class="x" id="photoClear">사진 빼기</button></div>
+          </div>
+        </fieldset>
 
-      let response;
-      try {
-        // Keep this a simple CORS request; the broker may not support preflight.
-        response = await fetch(BROKER_URL, {
-          method: "POST",
-          body: JSON.stringify({ sealed: SEALED })
-        });
-      } catch {
-        showError("서버에 연결하지 못했습니다. 네트워크와 배포 주소를 확인해 주세요.");
-        return;
-      }
-      if (!response.ok) {
-        showError("서버가 연결 요청을 처리하지 못했습니다 (HTTP " + response.status + ").");
-        return;
-      }
+        <fieldset>
+          <legend>구분</legend>
+          <div class="tiles" data-group="kind">
+            <div class="tile"><input type="radio" name="kind" id="k1" value="동물" checked><label for="k1"><span class="ico">🐾</span>동물</label></div>
+            <div class="tile"><input type="radio" name="kind" id="k2" value="식물"><label for="k2"><span class="ico">🪴</span>식물</label></div>
+            <div class="tile"><input type="radio" name="kind" id="k3" value="잘 모름"><label for="k3"><span class="ico">🔍</span>잘 모름</label></div>
+          </div>
+        </fieldset>
 
-      let data;
-      try {
-        data = await response.json();
-      } catch {
-        showError("서버 응답을 읽을 수 없습니다. 잠시 후 다시 시도해 주세요.");
-        return;
-      }
-      if (!data || typeof data.token !== "string" || !data.token.trim()) {
-        showError("서버에서 연결 토큰을 받지 못했습니다. 암호와 배포 주소를 확인해 주세요.");
-        return;
-      }
+        <fieldset>
+          <legend>키울 장소</legend>
+          <div class="tiles">
+            <div class="tile"><input type="radio" name="place" id="p1" value="실내" checked><label for="p1"><span class="ico">🏠</span>실내</label></div>
+            <div class="tile"><input type="radio" name="place" id="p2" value="베란다·반실외"><label for="p2"><span class="ico">🪟</span>베란다</label></div>
+            <div class="tile"><input type="radio" name="place" id="p3" value="실외"><label for="p3"><span class="ico">🌤️</span>실외</label></div>
+          </div>
+        </fieldset>
 
-      try {
-        const directLine = WebChat.createDirectLine({ token: data.token });
-        status.hidden = true;
-        directLine.postActivity({
-          type: "event", name: "startConversation", from: { id: "user" }
-        }).subscribe({
-          error: () => showError("첫 인사를 요청하지 못했습니다. 채팅창에 메시지를 입력해 주세요.")
-        });
-        WebChat.renderWebChat({ directLine, locale: "ko-KR" }, document.getElementById("webchat"));
-      } catch {
-        showError("채팅을 시작하지 못했습니다. 새로고침 후 다시 시도해 주세요.");
-      }
-    }
+        <fieldset>
+          <legend>공간 크기<span class="opt">선택</span><span class="hint">방, 베란다, 사육장·화분 자리 등 키울 곳</span></legend>
+          <div class="seg" role="radiogroup" aria-label="공간 크기 입력 방식">
+            <input type="radio" name="sizeMode" id="sm1" value="dims" checked><label for="sm1">가로 × 세로</label>
+            <input type="radio" name="sizeMode" id="sm2" value="area"><label for="sm2">넓이</label>
+          </div>
+          <div class="size-row" id="sizeDims">
+            <input id="w" name="w" type="number" min="0" step="any" placeholder="가로" aria-label="가로">
+            <span class="times" aria-hidden="true">×</span>
+            <input id="l" name="l" type="number" min="0" step="any" placeholder="세로" aria-label="세로">
+            <select id="dimUnit" name="dimUnit" aria-label="길이 단위"><option value="m">m</option><option value="cm">cm</option></select>
+          </div>
+          <div class="size-row" id="sizeArea" hidden>
+            <input id="area" name="area" type="number" min="0" step="any" placeholder="넓이" aria-label="넓이">
+            <select id="areaUnit" name="areaUnit" aria-label="넓이 단위"><option value="m2">㎡</option><option value="pyeong">평</option></select>
+          </div>
+        </fieldset>
 
-    connect();
-  </script>
+        <fieldset>
+          <label class="lbl" for="count">개체 수<span class="opt">선택</span><span class="hint">비워 두면 1로 계산</span></label>
+          <div class="unit unit-short"><input id="count" name="count" type="number" min="1" step="1" placeholder="1"><span>마리·개</span></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>자동화</legend>
+          <div class="tiles">
+            <div class="tile"><input type="radio" name="auto" id="a1" value="수동 관리"><label for="a1"><span class="ico">🖐️</span>수동<small>직접 관리</small></label></div>
+            <div class="tile"><input type="radio" name="auto" id="a2" value="일부 자동화(타이머·온도조절기)" checked><label for="a2"><span class="ico">⏲️</span>일부 자동<small>타이머·온도조절기</small></label></div>
+            <div class="tile"><input type="radio" name="auto" id="a3" value="완전 자동화(스마트 제어)"><label for="a3"><span class="ico">🤖</span>완전 자동<small>스마트 제어</small></label></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <label class="lbl" for="env">지금 환경<span class="opt">선택</span><span class="hint">아는 만큼만</span></label>
+          <textarea id="env" name="env" placeholder="예: 남향 창 옆, 겨울 실내 18~20℃, 습도 40% 안팎, 낮에는 집에 사람 없음"></textarea>
+        </fieldset>
+
+        <fieldset>
+          <label class="lbl" for="budget">예산<span class="opt">선택</span><span class="hint">비워 두면 한도 없이 필요한 비용만 계산</span></label>
+          <div class="unit"><input id="budget" name="budget" type="number" min="0" step="10000" placeholder="예: 300000"><span>원</span></div>
+        </fieldset>
+
+        <button class="go" id="go" type="submit"><span aria-hidden="true">🔎</span><span id="goText">환경 진단 받기</span></button>
+        <p class="formnote">진단에는 최대 3분 정도 걸립니다. 가격은 진단 시점의 온라인 판매가라 배송비와 할인에 따라 달라질 수 있습니다.</p>
+      </form>
+    </div>
+
+    <aside class="stage" aria-label="입력한 내용 미리 보기">
+      <div class="terra-box" id="terraBox">
+        <div class="gear" id="gear" aria-hidden="true">⚙️</div>
+        <div class="sky" id="sky" aria-hidden="true">💡</div>
+        <div class="cube" id="cube" aria-hidden="true">
+          <div class="face f-back"></div><div class="face f-left"></div><div class="face f-right"></div><div class="face f-bottom"></div>
+          <div class="soil"><i class="s-back"></i><i class="s-front"></i></div>
+          <span class="sprout a">🌱</span><span class="sprout b">🌿</span>
+          <span class="critter" id="critter">🦎</span>
+          <div class="face f-top"></div><div class="face f-front"></div>
+        </div>
+        <div class="tag"><b id="tagName">무엇을 키울까요?</b><span id="tagSize"></span></div>
+      </div>
+      <p>드래그하면 테라리움을 돌려 볼 수 있어요.</p>
+    </aside>
+  </section>
+
+  <section id="report" aria-live="polite"></section>
+</main>
+
+<footer>생물의 건강 문제는 수의사나 전문가와 상담하세요.</footer>
+
+<script>
+// Copilot Studio agents reached over their anonymous Direct Line channel ("인증 없음").
+// The tenant's DLP policy blocks agent calls from workflows, so the page talks to the agents directly.
+const COPILOT = {
+  envHost: "https://cfe472a78d6be57d938181572ac35b.9d.environment.api.powerplatform.com",
+  directLine: "https://directline.botframework.com/v3/directline",
+  // 기자재 설계 is called directly: relayed through 팀장, its long JSON came back rewritten and broken.
+  equipmentAgent: "cr72a_ai_Nhgc6L",
+  // 생물조사 refuses anonymous Direct Line chats, so photos go to 팀장, which can see the image and uses its connected 생물조사 agent.
+  teamLead: "cr72a_untitledagent_Fvquju"
+};
+const EXPECTED_SECONDS = 120;
+const DEMO = new URLSearchParams(location.search).has("demo");
+
+const $ = s => document.querySelector(s);
+const form = $("#form"), report = $("#report");
+
+const EMOJI = [
+  [/게코|도마뱀|이구아나|카멜레온|드래곤|모니터/,"🦎"],[/거북|자라/,"🐢"],[/뱀|파이톤|보아/,"🐍"],[/개구리|두꺼비|팩맨/,"🐸"],
+  [/햄스터|기니피그|쥐|저빌/,"🐹"],[/토끼/,"🐰"],[/고슴도치/,"🦔"],[/앵무|새|잉꼬|문조|카나리아/,"🦜"],
+  [/구피|베타|물고기|금붕어|열대어|어항|테트라/,"🐟"],[/새우|게|가재/,"🦐"],[/거미|타란툴라/,"🕷️"],[/달팽이/,"🐌"],
+  [/고양이/,"🐈"],[/강아지|개/,"🐕"],[/선인장/,"🌵"],[/다육|에케베리아/,"🪴"],[/튤립/,"🌷"],[/장미/,"🌹"],[/해바라기/,"🌻"],
+  [/버섯/,"🍄"],[/허브|바질|민트|로즈마리/,"🌿"],[/토마토/,"🍅"],[/딸기/,"🍓"],[/고추/,"🌶️"],[/난초|난/,"🌸"],
+  [/몬스테라|고무나무|야자|식물|나무|이끼/,"🪴"]
+];
+function emojiFor(name, kind){
+  for (const [re, e] of EMOJI) if (re.test(name||"")) return e;
+  return kind === "식물" ? "🌱" : kind === "동물" ? "🐾" : "🦎";
+}
+const won = n => (typeof n === "number" && isFinite(n)) ? n.toLocaleString("ko-KR") + "원" : "확인 필요";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = u => /^https?:\/\//i.test(u||"") ? u : "";
+
+/* terrarium preview */
+const cube = $("#cube"), box = $("#terraBox");
+let rx = -14, ry = -28, drag = null;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function applyRot(){ cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`; }
+box.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY, rx, ry}; box.setPointerCapture(e.pointerId); });
+box.addEventListener("pointermove", e => {
+  if (!drag) return;
+  ry = drag.ry + (e.clientX - drag.x) * .4;
+  rx = Math.max(-40, Math.min(20, drag.rx - (e.clientY - drag.y) * .3));
+  applyRot();
+});
+box.addEventListener("pointerup", () => drag = null);
+box.addEventListener("pointercancel", () => drag = null);
+if (!reduce) (function idle(){ if (!drag) { ry += .08; applyRot(); } requestAnimationFrame(idle); })();
+
+/* photo: downscaled before upload so the request stays small */
+let photo = null;
+const drop = $("#drop"), fileIn = $("#photo");
+function readImage(file){
+  return new Promise((res, rej) => {
+    if (!file || !file.type.startsWith("image/")) return rej(new Error("이미지 파일만 올릴 수 있어요."));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1024, k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      const dataUrl = c.toDataURL("image/jpeg", .85);
+      res({name: file.name, dataUrl, mimeType: "image/jpeg", base64: dataUrl.split(",")[1]});
+    };
+    img.onerror = () => rej(new Error("사진을 읽지 못했어요. 다른 파일로 올려 주세요."));
+    img.src = url;
+  });
+}
+async function setPhoto(file){
+  try { photo = await readImage(file); }
+  catch (err) { photo = null; alert(err.message); }
+  $("#dropEmpty").hidden = !!photo; $("#dropFull").hidden = !photo;
+  if (photo) { $("#thumb").src = photo.dataUrl; $("#photoName").textContent = photo.name; }
+  syncPreview();
+}
+fileIn.addEventListener("change", () => setPhoto(fileIn.files[0]));
+["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t => drop.addEventListener(t, () => drop.classList.remove("over")));
+drop.addEventListener("drop", e => { e.preventDefault(); setPhoto(e.dataTransfer.files[0]); });
+$("#photoClear").addEventListener("click", () => { photo = null; fileIn.value = ""; $("#dropEmpty").hidden = false; $("#dropFull").hidden = true; syncPreview(); });
+
+function syncPreview(){
+  const f = new FormData(form), name = f.get("name").trim(), kind = f.get("kind");
+  const critter = $("#critter");
+  if (photo && !name) { critter.innerHTML = ""; const im = new Image(); im.src = photo.dataUrl; im.alt = ""; critter.append(im); }
+  else critter.textContent = emojiFor(name, kind);
+  $("#tagName").textContent = name || (photo ? "사진 속 생물" : "무엇을 키울까요?");
+  const size = readSize();
+  $("#tagSize").textContent = size.text || "";
+  const area = size.areaM2 || 6, scale = Math.max(.8, Math.min(1.25, .8 + area / 30));
+  cube.style.setProperty("--w", Math.round(220 * scale) + "px");
+  cube.style.setProperty("--d", Math.round(160 * scale) + "px");
+  const place = f.get("place");
+  $("#sky").textContent = place === "실외" ? "☀️" : place === "베란다·반실외" ? "🌤️" : "💡";
+  $("#gear").classList.toggle("on", f.get("auto") !== "수동 관리");
+}
+form.addEventListener("input", syncPreview);
+form.addEventListener("change", syncPreview);
+
+/* 3D tilt for option icons */
+document.querySelectorAll(".tile label").forEach(el => {
+  el.addEventListener("pointermove", e => {
+    if (reduce) return;
+    const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+    el.style.transform = `perspective(400px) rotateY(${x * 22}deg) rotateX(${-y * 22}deg) translateY(-2px)`;
+  });
+  el.addEventListener("pointerleave", () => el.style.transform = "");
+});
+
+/* submit */
+/* space size: width × length in m or cm, or a floor area in ㎡ or 평 */
+const PYEONG_M2 = 3.3058;
+const fmt = n => String(Math.round(n * 100) / 100);
+function readSize(){
+  const f = new FormData(form), num = k => { const v = parseFloat(f.get(k)); return isFinite(v) && v > 0 ? v : null; };
+  if (f.get("sizeMode") === "area"){
+    const a = num("area"); if (!a) return {};
+    const pyeong = f.get("areaUnit") === "pyeong", m2 = pyeong ? a * PYEONG_M2 : a;
+    return {areaM2: m2, text: pyeong ? `${fmt(a)}평 (약 ${fmt(m2)}㎡)` : `${fmt(a)}㎡`};
+  }
+  const w = num("w"), l = num("l"); if (!w || !l) return {};
+  const k = f.get("dimUnit") === "cm" ? 100 : 1, unit = k === 100 ? "cm" : "m";
+  return {widthM: w / k, lengthM: l / k, areaM2: (w / k) * (l / k), text: `${fmt(w)} × ${fmt(l)} ${unit} (${fmt((w / k) * (l / k))}㎡)`};
+}
+document.querySelectorAll('input[name="sizeMode"]').forEach(r => r.addEventListener("change", () => {
+  const area = $("#sm2").checked;
+  $("#sizeDims").hidden = area; $("#sizeArea").hidden = !area;
+}));
+
+function collect(){
+  const f = new FormData(form), num = k => { const v = parseFloat(f.get(k)); return isFinite(v) ? v : null; };
+  const size = readSize();
+  return {
+    name: f.get("name").trim(), kind: f.get("kind"), place: f.get("place"),
+    // Agents read roomWidthM/roomLengthM; area-only input leaves them null and passes the area separately.
+    roomWidthM: size.widthM ? Number(fmt(size.widthM)) : null, roomLengthM: size.lengthM ? Number(fmt(size.lengthM)) : null,
+    spaceAreaM2: size.areaM2 ? Number(fmt(size.areaM2)) : null, spaceText: size.text || null,
+    count: num("count") || 1,
+    automation: f.get("auto"), currentEnvironment: f.get("env").trim(), budgetKRW: num("budget"),
+    photo: photo ? {mimeType: photo.mimeType, dataUrl: photo.dataUrl} : null
+  };
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const input = collect();
+  if (!input.name && !input.photo) { $("#name").focus(); $("#name").setCustomValidity("이름을 적거나 사진을 올려 주세요."); $("#name").reportValidity(); return; }
+  $("#name").setCustomValidity("");
+  const btn = $("#go"); btn.disabled = true; $("#goText").textContent = "진단하는 중";
+  const started = Date.now();
+  // The agents report no progress, so stages are timed estimates; the bar eases toward 95% and only completes on the reply.
+  const stages = [
+    ...(input.photo && !input.name ? [[0, "에이전트가 사진을 보고 어떤 생물인지 확인하고 있어요."]] : []),
+    [input.photo && !input.name ? 50 : 0, "에이전트가 이 생물에게 필요한 환경을 조사하고 있어요."],
+    [input.photo && !input.name ? 90 : 35, "필요한 기자재마다 실제 판매가를 검색하고 있어요."],
+    [input.photo && !input.name ? 150 : 110, "결과를 모아 진단서를 정리하고 있어요."]
+  ];
+  report.innerHTML = `<div class="paper"><div class="progress">
+      <div class="p-top"><span class="pot" aria-hidden="true">🌱</span><b id="pStage"></b></div>
+      <div class="p-bar" role="progressbar" aria-label="진단 진행" aria-valuemin="0" aria-valuemax="100"><i id="pFill"></i></div>
+      <div class="p-meta"><span id="pTime"></span><span>진단에는 최대 3분 정도 걸려요. 창을 닫지 말고 기다려 주세요.</span></div>
+    </div></div>`;
+  const showProgress = () => {
+    const s = (Date.now() - started) / 1000;
+    const pct = Math.min(95, 95 * (1 - Math.exp(-s / (EXPECTED_SECONDS / 2.2))));
+    const stage = stages.filter(([at]) => s >= at).pop();
+    $("#pStage").textContent = stage ? stage[1] : "";
+    $("#pFill").style.width = pct.toFixed(1) + "%";
+    $(".p-bar").setAttribute("aria-valuenow", Math.round(pct));
+    $("#pTime").textContent = `${Math.floor(s / 60) ? Math.floor(s / 60) + "분 " : ""}${Math.round(s % 60)}초 지남`;
+  };
+  showProgress(); const ticker = setInterval(showProgress, 500);
+  report.scrollIntoView({behavior: reduce ? "auto" : "smooth"});
+  try {
+    const data = DEMO ? await sample(input) : await diagnose(input);
+    render(input, data, DEMO);
+  } catch (err) {
+    report.innerHTML = `<div class="paper"><p class="err">진단 결과를 받지 못했습니다. ${esc(err.message)} 잠시 후 다시 진단을 받아 주세요.</p></div>`;
+  } finally { clearInterval(ticker); btn.disabled = false; $("#goText").textContent = "환경 진단 받기"; }
+});
+
+/* Direct Line client */
+async function openConversation(schema){
+  const tr = await fetch(`${COPILOT.envHost}/copilotstudio/agenticruntime/botsbyschema/${schema}/directline/token?api-version=2022-03-01-preview`);
+  if (!tr.ok) throw new Error(`에이전트 연결 토큰을 받지 못했습니다(${tr.status}).`);
+  const {token} = await tr.json();
+  const cr = await fetch(`${COPILOT.directLine}/conversations`, {method:"POST", headers:{Authorization:`Bearer ${token}`}});
+  if (!cr.ok) throw new Error(`에이전트와 대화를 열지 못했습니다(${cr.status}).`);
+  const c = await cr.json();
+  return {id: c.conversationId, auth: {Authorization: `Bearer ${c.token || token}`}, watermark: null};
+}
+async function sendText(conv, text){
+  conv.sent = text;
+  const r = await fetch(`${COPILOT.directLine}/conversations/${conv.id}/activities`, {
+    method:"POST", headers:{...conv.auth, "Content-Type":"application/json"},
+    body: JSON.stringify({type:"message", from:{id:"web-form", role:"user"}, locale:"ko-KR", text})});
+  if (!r.ok) throw new Error(`메시지를 보내지 못했습니다(${r.status}).`);
+}
+async function sendPhoto(conv, text, photo){
+  conv.sent = text;
+  const blob = await (await fetch(photo.dataUrl)).blob();
+  const fd = new FormData();
+  fd.append("file", blob, "photo.jpg");
+  fd.append("activity", new Blob([JSON.stringify({type:"message", from:{id:"web-form", role:"user"}, locale:"ko-KR", text})], {type:"application/vnd.microsoft.activity"}));
+  const r = await fetch(`${COPILOT.directLine}/conversations/${conv.id}/upload?userId=web-form`, {method:"POST", headers: conv.auth, body: fd});
+  if (!r.ok) throw new Error(`사진을 보내지 못했습니다(${r.status}).`);
+}
+// Agents may answer in several messages: collect bot messages until `done` accepts one, or until the reply goes quiet.
+// Direct Line echoes our own message back with a rewritten sender id, so it is dropped by role and by content.
+async function waitForReply(conv, {done, timeoutMs = 240000, quietMs = 8000} = {}){
+  const t0 = Date.now(); const texts = []; let lastNew = 0;
+  while (Date.now() - t0 < timeoutMs){
+    await new Promise(r => setTimeout(r, 2000));
+    const q = conv.watermark ? `?watermark=${conv.watermark}` : "";
+    const r = await fetch(`${COPILOT.directLine}/conversations/${conv.id}/activities${q}`, {headers: conv.auth});
+    if (!r.ok) continue;
+    const j = await r.json(); conv.watermark = j.watermark;
+    const fresh = (j.activities || []).filter(a => a.type === "message" && a.text && a.from
+      && a.from.role !== "user" && a.from.id !== "web-form" && a.text !== conv.sent);
+    if (fresh.length){ texts.push(...fresh.map(a => a.text)); lastNew = Date.now(); }
+    if (done){ const hit = texts.slice().reverse().find(done); if (hit) return hit; }
+    else if (texts.length && Date.now() - lastNew > quietMs) return texts.join("\n");
+  }
+  if (texts.length) return texts.join("\n");
+  throw new Error("에이전트가 제한 시간 안에 답하지 않았습니다.");
+}
+// Agent replies can carry citation text around the JSON, so parse the outermost object only.
+function parseReport(text){
+  const a = text.indexOf("{"), b = text.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(text.slice(a, b + 1)); } catch { return null; }
+}
+
+async function diagnose(input){
+  const {photo: pic, ...form} = input;
+  form.identification = null;
+  if (pic && !form.name){
+    const idConv = await openConversation(COPILOT.teamLead);
+    await sendPhoto(idConv, "이 사진 속 동식물이 무엇인지 사진을 직접 보고 판별해 주세요. 이름, 학명, 판별 근거(사진에서 보이는 특징), 확신도만 짧게 답해 주세요.", pic);
+    form.identification = await waitForReply(idConv, {timeoutMs: 180000, quietMs: 10000});
+  }
+  const conv = await openConversation(COPILOT.equipmentAgent);
+  await sendText(conv, JSON.stringify(form));
+  const reply = await waitForReply(conv, {done: t => !!(parseReport(t) || {}).verdict, timeoutMs: 300000});
+  return parseReport(reply) || {summaryMarkdown: reply};
+}
+
+function render(input, d, isDemo){
+  const items = Array.isArray(d.equipment) ? d.equipment : [];
+  const sum = items.reduce((a, it) => a + (typeof it.subtotal === "number" ? it.subtotal : (it.unitPrice||0) * (it.qty||1)), 0);
+  const total = typeof d.totalCost === "number" ? d.totalCost : sum;
+  const budget = input.budgetKRW;
+  const v = d.verdict || {};
+  const cls = /어려|불가/.test(v.canRaise||"") ? "no" : /조건|보류/.test(v.canRaise||"") ? "mid" : "ok";
+  const tierCls = t => /필수/.test(t) ? "t1" : /권장/.test(t) ? "t2" : "t3";
+  const area = input.spaceText || "입력 안 함";
+
+  const envRows = [["키울 장소", input.place], ["공간 크기", area], ["개체 수", input.count], ["자동화", input.automation], ["지금 환경", input.currentEnvironment || "입력 안 함"]];
+  const pct = budget ? Math.min(100, Math.round(total / budget * 100)) : 0;
+  const over = budget && total > budget;
+  const needed = items.filter(it => !/선택/.test(it.tier || ""));
+  const missing = needed.filter(it => typeof it.unitPrice !== "number").length;
+  const budgetLine = !budget ? "예산 한도 없이 필요한 비용만 계산했습니다."
+    : over ? `예산보다 ${won(total - budget)} 더 듭니다.`
+    : missing ? "확인된 금액만으로는 예산 안이지만, 가격을 못 찾은 품목을 더하면 달라질 수 있어요."
+    : `예산 안에서 ${won(budget - total)} 남습니다.`;
+
+  report.innerHTML = `
+  <article class="paper">
+    ${isDemo ? `<div class="demo-flag">에이전트가 아직 연결되지 않아 예시 결과를 보여 드립니다. 실제 진단은 연결 후에 받을 수 있어요.</div>` : ""}
+    <div class="r-head">
+      <div class="r-emoji" aria-hidden="true">${photo ? `<img src="${photo.dataUrl}" alt="">` : emojiFor(d.name || input.name, input.kind)}</div>
+      <div><h2>${esc(d.name || input.name || "이름 확인 필요")}</h2>${d.scientificName ? `<div class="sci">${esc(d.scientificName)}</div>` : ""}
+        ${d.identification && d.identification.note ? `<p class="idnote">${esc(d.identification.note)}</p>` : ""}</div>
+      <div class="stamp ${cls}">${esc(v.canRaise || "판단 보류")}<small>${esc(v.costLevel || "")}</small></div>
+    </div>
+    <div class="r-body">
+      <section><h3>입력한 환경</h3>
+        <dl class="env">${envRows.map(([k, val]) => `<div><dt>${k}</dt><dd>${esc(val)}</dd></div>`).join("")}</dl>
+        ${Array.isArray(d.requirements) && d.requirements.length ? `<h3 style="margin-top:20px">이 생물에게 필요한 조건</h3>
+        <dl class="env">${d.requirements.map(r => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.value)}</dd></div>`).join("")}</dl>` : ""}
+      </section>
+
+      <section><h3>예산과 예상 비용</h3>
+        <div class="money">
+          <div><div class="sub">${missing ? "가격을 확인한 품목 합계" : "예상 총비용"}</div><div class="big">${won(total)}</div>
+            ${missing ? `<div class="sub need">필수·권장 ${needed.length}개 중 ${missing}개는 판매가를 찾지 못해 합계에서 빠졌어요. 실제 비용은 이보다 많습니다.</div>` : ""}</div>
+          <div><div class="sub">입력한 예산</div><div class="big" style="font-size:24px">${budget ? won(budget) : "입력 안 함"}</div>
+            <div class="sub">${budgetLine}</div></div>
+          ${budget ? `<div class="bar ${over ? "over" : ""}" role="img" aria-label="예산 대비 ${Math.round(total/budget*100)}%"><i style="width:${pct}%"></i></div>` : ""}
+        </div>
+      </section>
+
+      <section><h3>필요한 기자재와 금액</h3>
+        ${items.length ? `<div class="scroll"><table class="tbl">
+          <thead><tr><th>구분</th><th>품목</th><th class="num">수량</th><th class="num">단가</th><th class="num">소계</th><th>판매처</th></tr></thead>
+          <tbody>${items.map(it => {
+            const link = safeUrl(it.link);
+            const sub = typeof it.subtotal === "number" ? it.subtotal : (typeof it.unitPrice === "number" ? it.unitPrice * (it.qty||1) : null);
+            return `<tr><td><span class="tier ${tierCls(it.tier)}">${esc(it.tier || "선택")}</span></td>
+              <td>${esc(it.item)}${it.spec ? `<div class="spec">${esc(it.spec)}</div>` : ""}</td>
+              <td class="num">${esc(it.qty ?? 1)}</td><td class="num">${typeof it.unitPrice === "number" ? won(it.unitPrice) : `<span class="need">확인 필요</span>`}</td>
+              <td class="num">${sub != null ? won(sub) : "-"}</td>
+              <td>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(it.seller || "판매처 보기")}</a>` : esc(it.seller || "")}</td></tr>`;
+          }).join("")}</tbody>
+          <tfoot><tr><td colspan="4">합계</td><td class="num">${won(total)}</td><td></td></tr></tfoot>
+        </table></div>` : (d.summaryMarkdown ? `<div class="verdict"><p style="white-space:pre-wrap">${esc(d.summaryMarkdown)}</p></div>` : `<p>기자재 정보를 받지 못했습니다.</p>`)}
+      </section>
+
+      <section><h3>결론</h3>
+        <div class="verdict">
+          <p>${esc(v.summary || "")}</p>
+          <div class="cols">
+            ${Array.isArray(v.reasons) && v.reasons.length ? `<div><b>판단 근거</b><ul>${v.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>` : ""}
+            ${Array.isArray(v.improvements) && v.improvements.length ? `<div><b>바꾸면 좋은 점</b><ul>${v.improvements.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>` : ""}
+          </div>
+        </div>
+      </section>
+    </div>
+  </article>`;
+}
+
+function sample(input){
+  return new Promise(r => setTimeout(() => r({
+    name: input.name || "레오파드 게코", scientificName: "Eublepharis macularius",
+    identification: input.name ? null : {method: "사진", note: "사진으로 판별했습니다. 무늬와 꼬리 모양이 레오파드 게코와 일치합니다(확신도 높음)."},
+    requirements: [{label:"온도", value:"핫존 30~32℃, 쿨존 24~26℃"}, {label:"습도", value:"30~40%, 탈피 때 은신처 습식"}, {label:"사육장", value:"1마리 기준 60×45×45cm 이상"}, {label:"조명", value:"낮 10~12시간, 저강도 UVB 권장"}],
+    equipment: [
+      {tier:"필수", item:"유리 사육장", spec:"60×45×45cm, 전면 도어", qty:1, unitPrice:195000, seller:"쿠팡", link:"https://www.google.com/search?tbm=shop&q=60x45x45+사육장"},
+      {tier:"필수", item:"필름 히터", spec:"12W, 바닥 1/3 면적", qty:1, unitPrice:17990, seller:"라라아쿠아", link:""},
+      {tier:"필수", item:"온도조절기", spec:"센서형, 히터 연결용", qty:1, unitPrice:32000, seller:"파충류몰", link:""},
+      {tier:"필수", item:"디지털 온습도계", qty:2, unitPrice:5715, seller:"쿠팡", link:""},
+      {tier:"권장", item:"UVB 램프", spec:"13W 5.0", qty:1, unitPrice:22000, seller:"라라아쿠아", link:""},
+      {tier:"선택", item:"습식 은신처", qty:1, unitPrice:null, seller:"", link:""}
+    ],
+    verdict: {canRaise:"키울 수 있음", costLevel:"보통 수준 비용",
+      summary:"실내 20℃ 안팎이면 히터와 온도조절기만 갖춰도 충분히 키울 수 있습니다. 첫 세팅에 약 28만 원이 듭니다.",
+      reasons:["실내라 겨울에도 히터로 핫존 온도를 맞출 수 있습니다.","공간이 60cm 사육장을 놓기에 충분합니다.","타이머·온도조절기가 있어 낮에 비워도 관리가 됩니다."],
+      improvements:["겨울에 방 온도가 18℃ 아래로 떨어지면 히터 출력을 한 단계 올리세요.","습식 은신처는 가격 확인 후 추가하세요."]}
+  }), 900));
+}
+
+syncPreview();
+</script>
 </body>
 </html>
